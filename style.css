@@ -49,6 +49,21 @@ nav img{
     width: 100%;
 
 }
+/* Styles for the login button */
+.btnLogin {
+    color: #fff;
+    text-decoration: none;
+    padding: 8px 20px;
+    border: 2px solid #fff;
+    border-radius: 6px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.btnLogin:hover {
+    background-color: #fff;
+    color: #000;
+}
+
 .text-box{
     width: 90%;
     color: #fff;

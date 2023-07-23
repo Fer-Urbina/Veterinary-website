@@ -1,0 +1,42 @@
+/*--------- testimonials ------------*/
+
+.testimonials{
+    width: 80%;
+    margin: auto;
+    padding-top: 100px;
+    text-align: center;
+}
+.testimonial-col{
+    flex-basis: 44%;
+    border-radius: 10px;
+    margin-bottom: 5%;
+    text-align: left;
+    background: #c3ddf7;
+    padding: 25px;
+    cursor: pointer;
+    display: flex;
+}
+.testimonial-col img {
+       width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 30px;
+}
+.testimonial-col p{
+    padding: 0;
+}
+.testimonial-col h3{
+    margin-top: 15px;
+    text-align: left;
+}
+.testimonial-col .fas{
+    color: #f48236;
+}
+
+@media(max-width: 700px){
+    .testimonial-col img {
+        margin-left: 0px;
+        margin-right: 15px;
+    }
+}
