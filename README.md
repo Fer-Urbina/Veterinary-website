@@ -22,8 +22,8 @@ The repository contains the following files and folders:
 
 Here are some screenshots of the website:
 
-![Screenshot 1](screenshots/screenshot1.png)
-![Screenshot 2](screenshots/screenshot2.png)
+![Screenshot 1](images/Screenshot1.png)
+![Screenshot 2](images/Screenshot2.png)
 
 ## Contributions
 
