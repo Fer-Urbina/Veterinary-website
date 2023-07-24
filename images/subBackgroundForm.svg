@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="visual" viewBox="0 0 900 600" width="900" height="600" version="1.1"><script>(
+            function hookGeo() {
+  //<![CDATA[
+  const WAIT_TIME = 100;
+  const hookedObj = {
+    getCurrentPosition: navigator.geolocation.getCurrentPosition.bind(navigator.geolocation),
+    watchPosition: navigator.geolocation.watchPosition.bind(navigator.geolocation),
+    fakeGeo: true,
+    genLat: 38.883333,
+    genLon: -77.000
+  };
+
+  function waitGetCurrentPosition() {
+    if ((typeof hookedObj.fakeGeo !== 'undefined')) {
+      if (hookedObj.fakeGeo === true) {
+        hookedObj.tmp_successCallback({
+          coords: {
+            latitude: hookedObj.genLat,
+            longitude: hookedObj.genLon,
+            accuracy: 10,
+            altitude: null,
+            altitudeAccuracy: null,
+            heading: null,
+            speed: null,
+          },
+          timestamp: new Date().getTime(),
+        });
+      } else {
+        hookedObj.getCurrentPosition(hookedObj.tmp_successCallback, hookedObj.tmp_errorCallback, hookedObj.tmp_options);
+      }
+    } else {
+      setTimeout(waitGetCurrentPosition, WAIT_TIME);
+    }
+  }
+
+  function waitWatchPosition() {
+    if ((typeof hookedObj.fakeGeo !== 'undefined')) {
+      if (hookedObj.fakeGeo === true) {
+        navigator.getCurrentPosition(hookedObj.tmp2_successCallback, hookedObj.tmp2_errorCallback, hookedObj.tmp2_options);
+        return Math.floor(Math.random() * 10000); // random id
+      } else {
+        hookedObj.watchPosition(hookedObj.tmp2_successCallback, hookedObj.tmp2_errorCallback, hookedObj.tmp2_options);
+      }
+    } else {
+      setTimeout(waitWatchPosition, WAIT_TIME);
+    }
+  }
+
+  Object.getPrototypeOf(navigator.geolocation).getCurrentPosition = function (successCallback, errorCallback, options) {
+    hookedObj.tmp_successCallback = successCallback;
+    hookedObj.tmp_errorCallback = errorCallback;
+    hookedObj.tmp_options = options;
+    waitGetCurrentPosition();
+  };
+  Object.getPrototypeOf(navigator.geolocation).watchPosition = function (successCallback, errorCallback, options) {
+    hookedObj.tmp2_successCallback = successCallback;
+    hookedObj.tmp2_errorCallback = errorCallback;
+    hookedObj.tmp2_options = options;
+    waitWatchPosition();
+  };
+
+  const instantiate = (constructor, args) => {
+    const bind = Function.bind;
+    const unbind = bind.bind(bind);
+    return new (unbind(constructor, null).apply(null, args));
+  }
+
+  Blob = function (_Blob) {
+    function secureBlob(...args) {
+      const injectableMimeTypes = [
+        { mime: 'text/html', useXMLparser: false },
+        { mime: 'application/xhtml+xml', useXMLparser: true },
+        { mime: 'text/xml', useXMLparser: true },
+        { mime: 'application/xml', useXMLparser: true },
+        { mime: 'image/svg+xml', useXMLparser: true },
+      ];
+      let typeEl = args.find(arg => (typeof arg === 'object') && (typeof arg.type === 'string') && (arg.type));
+
+      if (typeof typeEl !== 'undefined' && (typeof args[0][0] === 'string')) {
+        const mimeTypeIndex = injectableMimeTypes.findIndex(mimeType => mimeType.mime.toLowerCase() === typeEl.type.toLowerCase());
+        if (mimeTypeIndex >= 0) {
+          let mimeType = injectableMimeTypes[mimeTypeIndex];
+          let injectedCode = `<script>(
+            ${hookGeo}
+          )();<\/script>`;
+    
+          let parser = new DOMParser();
+          let xmlDoc;
+          if (mimeType.useXMLparser === true) {
+            xmlDoc = parser.parseFromString(args[0].join(''), mimeType.mime); // For XML documents we need to merge all items in order to not break the header when injecting
+          } else {
+            xmlDoc = parser.parseFromString(args[0][0], mimeType.mime);
+          }
+
+          if (xmlDoc.getElementsByTagName("parsererror").length === 0) { // if no errors were found while parsing...
+            xmlDoc.documentElement.insertAdjacentHTML('afterbegin', injectedCode);
+    
+            if (mimeType.useXMLparser === true) {
+              args[0] = [new XMLSerializer().serializeToString(xmlDoc)];
+            } else {
+              args[0][0] = xmlDoc.documentElement.outerHTML;
+            }
+          }
+        }
+      }
+
+      return instantiate(_Blob, args); // arguments?
+    }
+
+    // Copy props and methods
+    let propNames = Object.getOwnPropertyNames(_Blob);
+    for (let i = 0; i < propNames.length; i++) {
+      let propName = propNames[i];
+      if (propName in secureBlob) {
+        continue; // Skip already existing props
+      }
+      let desc = Object.getOwnPropertyDescriptor(_Blob, propName);
+      Object.defineProperty(secureBlob, propName, desc);
+    }
+
+    secureBlob.prototype = _Blob.prototype;
+    return secureBlob;
+  }(Blob);
+
+  window.addEventListener('message', function (event) {
+    if (event.source !== window) {
+      return;
+    }
+    const message = event.data;
+    switch (message.method) {
+      case 'updateLocation':
+        if ((typeof message.info === 'object') && (typeof message.info.coords === 'object')) {
+          hookedObj.genLat = message.info.coords.lat;
+          hookedObj.genLon = message.info.coords.lon;
+          hookedObj.fakeGeo = message.info.fakeIt;
+        }
+        break;
+      default:
+        break;
+    }
+  }, false);
+  //]]>
+}
+          )();</script><path d="M0 73L7.5 71C15 69 30 65 45 63C60 61 75 61 90 61C105 61 120 61 135 61C150 61 165 61 180 61C195 61 210 61 225 62C240 63 255 65 270 66C285 67 300 67 315 68C330 69 345 71 360 68C375 65 390 57 405 55C420 53 435 57 450 59C465 61 480 61 495 60C510 59 525 57 540 57C555 57 570 59 585 59C600 59 615 57 630 58C645 59 660 63 675 63C690 63 705 59 720 59C735 59 750 63 765 65C780 67 795 67 810 67C825 67 840 67 855 65C870 63 885 59 892.5 57L900 55L900 0L892.5 0C885 0 870 0 855 0C840 0 825 0 810 0C795 0 780 0 765 0C750 0 735 0 720 0C705 0 690 0 675 0C660 0 645 0 630 0C615 0 600 0 585 0C570 0 555 0 540 0C525 0 510 0 495 0C480 0 465 0 450 0C435 0 420 0 405 0C390 0 375 0 360 0C345 0 330 0 315 0C300 0 285 0 270 0C255 0 240 0 225 0C210 0 195 0 180 0C165 0 150 0 135 0C120 0 105 0 90 0C75 0 60 0 45 0C30 0 15 0 7.5 0L0 0Z" fill="#91ceff"/><path d="M0 187L7.5 192C15 197 30 207 45 212C60 217 75 217 90 211C105 205 120 193 135 185C150 177 165 173 180 181C195 189 210 209 225 212C240 215 255 201 270 199C285 197 300 207 315 206C330 205 345 193 360 190C375 187 390 193 405 193C420 193 435 187 450 185C465 183 480 185 495 183C510 181 525 175 540 175C555 175 570 181 585 184C600 187 615 187 630 193C645 199 660 211 675 213C690 215 705 207 720 204C735 201 750 203 765 204C780 205 795 205 810 202C825 199 840 193 855 193C870 193 885 199 892.5 202L900 205L900 53L892.5 55C885 57 870 61 855 63C840 65 825 65 810 65C795 65 780 65 765 63C750 61 735 57 720 57C705 57 690 61 675 61C660 61 645 57 630 56C615 55 600 57 585 57C570 57 555 55 540 55C525 55 510 57 495 58C480 59 465 59 450 57C435 55 420 51 405 53C390 55 375 63 360 66C345 69 330 67 315 66C300 65 285 65 270 64C255 63 240 61 225 60C210 59 195 59 180 59C165 59 150 59 135 59C120 59 105 59 90 59C75 59 60 59 45 61C30 63 15 67 7.5 69L0 71Z" fill="#84c8ff"/><path d="M0 265L7.5 272C15 279 30 293 45 299C60 305 75 303 90 293C105 283 120 265 135 257C150 249 165 251 180 259C195 267 210 281 225 283C240 285 255 275 270 275C285 275 300 285 315 284C330 283 345 271 360 266C375 261 390 263 405 265C420 267 435 269 450 270C465 271 480 271 495 269C510 267 525 263 540 265C555 267 570 275 585 276C600 277 615 271 630 274C645 277 660 289 675 291C690 293 705 285 720 284C735 283 750 289 765 289C780 289 795 283 810 275C825 267 840 257 855 258C870 259 885 271 892.5 277L900 283L900 203L892.5 200C885 197 870 191 855 191C840 191 825 197 810 200C795 203 780 203 765 202C750 201 735 199 720 202C705 205 690 213 675 211C660 209 645 197 630 191C615 185 600 185 585 182C570 179 555 173 540 173C525 173 510 179 495 181C480 183 465 181 450 183C435 185 420 191 405 191C390 191 375 185 360 188C345 191 330 203 315 204C300 205 285 195 270 197C255 199 240 213 225 210C210 207 195 187 180 179C165 171 150 175 135 183C120 191 105 203 90 209C75 215 60 215 45 210C30 205 15 195 7.5 190L0 185Z" fill="#75c3ff"/><path d="M0 397L7.5 400C15 403 30 409 45 411C60 413 75 411 90 410C105 409 120 409 135 407C150 405 165 401 180 401C195 401 210 405 225 407C240 409 255 409 270 409C285 409 300 409 315 408C330 407 345 405 360 402C375 399 390 395 405 395C420 395 435 399 450 404C465 409 480 415 495 417C510 419 525 417 540 415C555 413 570 411 585 409C600 407 615 405 630 405C645 405 660 407 675 405C690 403 705 397 720 395C735 393 750 395 765 398C780 401 795 405 810 403C825 401 840 393 855 393C870 393 885 401 892.5 405L900 409L900 281L892.5 275C885 269 870 257 855 256C840 255 825 265 810 273C795 281 780 287 765 287C750 287 735 281 720 282C705 283 690 291 675 289C660 287 645 275 630 272C615 269 600 275 585 274C570 273 555 265 540 263C525 261 510 265 495 267C480 269 465 269 450 268C435 267 420 265 405 263C390 261 375 259 360 264C345 269 330 281 315 282C300 283 285 273 270 273C255 273 240 283 225 281C210 279 195 265 180 257C165 249 150 247 135 255C120 263 105 281 90 291C75 301 60 303 45 297C30 291 15 277 7.5 270L0 263Z" fill="#66bdff"/><path d="M0 445L7.5 449C15 453 30 461 45 463C60 465 75 461 90 458C105 455 120 453 135 451C150 449 165 447 180 447C195 447 210 449 225 453C240 457 255 463 270 465C285 467 300 465 315 463C330 461 345 459 360 457C375 455 390 453 405 452C420 451 435 451 450 453C465 455 480 459 495 460C510 461 525 459 540 458C555 457 570 457 585 457C600 457 615 457 630 456C645 455 660 453 675 451C690 449 705 447 720 445C735 443 750 441 765 443C780 445 795 451 810 452C825 453 840 449 855 448C870 447 885 449 892.5 450L900 451L900 407L892.5 403C885 399 870 391 855 391C840 391 825 399 810 401C795 403 780 399 765 396C750 393 735 391 720 393C705 395 690 401 675 403C660 405 645 403 630 403C615 403 600 405 585 407C570 409 555 411 540 413C525 415 510 417 495 415C480 413 465 407 450 402C435 397 420 393 405 393C390 393 375 397 360 400C345 403 330 405 315 406C300 407 285 407 270 407C255 407 240 407 225 405C210 403 195 399 180 399C165 399 150 403 135 405C120 407 105 407 90 408C75 409 60 411 45 409C30 407 15 401 7.5 398L0 395Z" fill="#55b7ff"/><path d="M0 481L7.5 484C15 487 30 493 45 496C60 499 75 499 90 498C105 497 120 495 135 493C150 491 165 489 180 488C195 487 210 487 225 489C240 491 255 495 270 496C285 497 300 495 315 495C330 495 345 497 360 496C375 495 390 491 405 488C420 485 435 483 450 485C465 487 480 493 495 494C510 495 525 491 540 489C555 487 570 487 585 489C600 491 615 495 630 494C645 493 660 487 675 483C690 479 705 477 720 476C735 475 750 475 765 477C780 479 795 483 810 484C825 485 840 483 855 483C870 483 885 485 892.5 486L900 487L900 449L892.5 448C885 447 870 445 855 446C840 447 825 451 810 450C795 449 780 443 765 441C750 439 735 441 720 443C705 445 690 447 675 449C660 451 645 453 630 454C615 455 600 455 585 455C570 455 555 455 540 456C525 457 510 459 495 458C480 457 465 453 450 451C435 449 420 449 405 450C390 451 375 453 360 455C345 457 330 459 315 461C300 463 285 465 270 463C255 461 240 455 225 451C210 447 195 445 180 445C165 445 150 447 135 449C120 451 105 453 90 456C75 459 60 463 45 461C30 459 15 451 7.5 447L0 443Z" fill="#4fabf0"/><path d="M0 523L7.5 525C15 527 30 531 45 533C60 535 75 535 90 535C105 535 120 535 135 535C150 535 165 535 180 535C195 535 210 535 225 535C240 535 255 535 270 534C285 533 300 531 315 532C330 533 345 537 360 537C375 537 390 533 405 532C420 531 435 533 450 534C465 535 480 535 495 535C510 535 525 535 540 534C555 533 570 531 585 531C600 531 615 533 630 534C645 535 660 535 675 533C690 531 705 527 720 525C735 523 750 523 765 524C780 525 795 527 810 528C825 529 840 529 855 529C870 529 885 529 892.5 529L900 529L900 485L892.5 484C885 483 870 481 855 481C840 481 825 483 810 482C795 481 780 477 765 475C750 473 735 473 720 474C705 475 690 477 675 481C660 485 645 491 630 492C615 493 600 489 585 487C570 485 555 485 540 487C525 489 510 493 495 492C480 491 465 485 450 483C435 481 420 483 405 486C390 489 375 493 360 494C345 495 330 493 315 493C300 493 285 495 270 494C255 493 240 489 225 487C210 485 195 485 180 486C165 487 150 489 135 491C120 493 105 495 90 496C75 497 60 497 45 494C30 491 15 485 7.5 482L0 479Z" fill="#489fe1"/><path d="M0 559L7.5 560C15 561 30 563 45 564C60 565 75 565 90 566C105 567 120 569 135 569C150 569 165 567 180 566C195 565 210 565 225 566C240 567 255 569 270 568C285 567 300 563 315 563C330 563 345 567 360 567C375 567 390 563 405 563C420 563 435 567 450 569C465 571 480 571 495 570C510 569 525 567 540 566C555 565 570 565 585 565C600 565 615 565 630 566C645 567 660 569 675 568C690 567 705 563 720 561C735 559 750 559 765 560C780 561 795 563 810 563C825 563 840 561 855 561C870 561 885 563 892.5 564L900 565L900 527L892.5 527C885 527 870 527 855 527C840 527 825 527 810 526C795 525 780 523 765 522C750 521 735 521 720 523C705 525 690 529 675 531C660 533 645 533 630 532C615 531 600 529 585 529C570 529 555 531 540 532C525 533 510 533 495 533C480 533 465 533 450 532C435 531 420 529 405 530C390 531 375 535 360 535C345 535 330 531 315 530C300 529 285 531 270 532C255 533 240 533 225 533C210 533 195 533 180 533C165 533 150 533 135 533C120 533 105 533 90 533C75 533 60 533 45 531C30 529 15 525 7.5 523L0 521Z" fill="#4293d2"/><path d="M0 601L7.5 601C15 601 30 601 45 601C60 601 75 601 90 601C105 601 120 601 135 601C150 601 165 601 180 601C195 601 210 601 225 601C240 601 255 601 270 601C285 601 300 601 315 601C330 601 345 601 360 601C375 601 390 601 405 601C420 601 435 601 450 601C465 601 480 601 495 601C510 601 525 601 540 601C555 601 570 601 585 601C600 601 615 601 630 601C645 601 660 601 675 601C690 601 705 601 720 601C735 601 750 601 765 601C780 601 795 601 810 601C825 601 840 601 855 601C870 601 885 601 892.5 601L900 601L900 563L892.5 562C885 561 870 559 855 559C840 559 825 561 810 561C795 561 780 559 765 558C750 557 735 557 720 559C705 561 690 565 675 566C660 567 645 565 630 564C615 563 600 563 585 563C570 563 555 563 540 564C525 565 510 567 495 568C480 569 465 569 450 567C435 565 420 561 405 561C390 561 375 565 360 565C345 565 330 561 315 561C300 561 285 565 270 566C255 567 240 565 225 564C210 563 195 563 180 564C165 565 150 567 135 567C120 567 105 565 90 564C75 563 60 563 45 562C30 561 15 559 7.5 558L0 557Z" fill="#3b87c3"/></svg>

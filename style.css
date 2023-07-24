@@ -49,6 +49,7 @@ nav img{
     width: 100%;
 
 }
+
 /* Styles for the login button */
 .btnLogin {
     color: #fff;
@@ -74,6 +75,7 @@ nav img{
     text-align: center;
 }
 .text-box h1{
+    color: #fff;
     font-size: 62px;
 }
 .text-box p{
@@ -303,7 +305,20 @@ h3{
     }
 }
 
-/*---------- call to action ----------*/
+/* Global style for the whole page */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 0;
+}
+
+/* Form page specific styles */
+body.form {
+    background-image: url('images/bckgroundForForm.svg');
+    background-size: cover;
+    background-position: center;
+}
 
 .cta{
     margin: 100px auto;
@@ -332,7 +347,7 @@ h3{
 .footer{
     width: 100%;
     text-align: center;
-    padding: 30 px 0;
+    padding: 30px 0; /* Fixed the padding value */
 }
 
 .footer h4{
@@ -346,4 +361,76 @@ h3{
     margin: 0 13px;
     cursor: pointer;
     padding: 18px 0;
+}
+
+/*--------- Style for the form file -----------*/
+
+.container {
+    width: 100%; /* Set the container width to 100% */
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333333;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    color: #666666;
+    margin-bottom: 5px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="date"],
+input[type="time"],
+textarea {
+    width: 95%;
+    padding: 10px 15px;
+    font-size: 16px;
+    color: #333333;
+    border: 1px solid #dddddd;
+    border-radius: 4px;
+    background-color: #f5f5f5;
+}
+
+textarea {
+    resize: vertical;
+}
+
+input[type="submit"] {
+    background-color: #4caf50;
+    color: #ffffff;
+    border: none;
+    outline: none;
+    padding: 12px 20px;
+    font-size: 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+input[type="submit"]:hover {
+    background-color: #45a049;
+}
+
+/* Add this style to set the background image for the form container */
+.form-container {
+    background-image: url('images/subBackgroundForm.svg');
+    background-size: cover;
+    background-position: center;
+    background-color: transparent;
 }
